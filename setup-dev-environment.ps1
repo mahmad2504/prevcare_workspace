@@ -114,18 +114,29 @@ if ($Step -ne "all") {
 }
 Write-Host ""
 
-# Configuration
-$RepoUrl = "https://dev.azure.com/fnawaz/CHI%20Development/_git/prevcare-fullstack"
-$BranchName = "new-transcriber-component-integration"
-$RepoDir = "prevcare-fullstack"
-$NotesDir = "C:\ZWORK\Notes\Run-healthcare-software"
-
-# Get the workspace root directory
+# Get the workspace root directory (script location)
 if ($PSScriptRoot) {
     $WorkspaceRoot = $PSScriptRoot
 } else {
     $WorkspaceRoot = Get-Location
 }
+
+# Load configuration from external file
+$ConfigFile = Join-Path $WorkspaceRoot "config.ps1"
+if (Test-Path $ConfigFile) {
+    . $ConfigFile
+    Write-Host "Configuration loaded from: $ConfigFile" -ForegroundColor DarkGray
+} else {
+    Write-Host "[WARNING] Configuration file not found: $ConfigFile" -ForegroundColor Yellow
+    Write-Host "Using default configuration values..." -ForegroundColor Yellow
+    # Default configuration (fallback if config.ps1 doesn't exist)
+    $RepoUrl = "https://dev.azure.com/fnawaz/CHI%20Development/_git/prevcare-fullstack"
+    $BranchName = "new-transcriber-component-integration"
+    $RepoDir = "prevcare-fullstack"
+    $NotesDir = "C:\ZWORK\Notes\Run-healthcare-software"
+}
+Write-Host ""
+
 Set-Location $WorkspaceRoot
 
 # Step 1: Code Checkout
