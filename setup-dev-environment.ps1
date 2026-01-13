@@ -1,4 +1,4 @@
-# PowerShell script to setup and run PrevCare Fullstack development environment
+﻿# PowerShell script to setup and run PrevCare Fullstack development environment
 # Run this script from the workspace root directory
 #
 # ============================================================================
@@ -44,7 +44,7 @@
 #   - Checks out the branch: new-transcriber-component-integration
 #
 # Step 2 (mysql):
-#   - Copies docker-compose.yml from C:\ZWORK\Notes\Run-healthcare-software
+#   - Copies docker-compose.yml from C:\ZWORK\Notes\prevcare
 #   - Starts MySQL Docker container in detached mode
 #
 # Step 3 (backend):
@@ -133,7 +133,7 @@ if (Test-Path $ConfigFile) {
     $RepoUrl = "https://dev.azure.com/fnawaz/CHI%20Development/_git/prevcare-fullstack"
     $BranchName = "new-transcriber-component-integration"
     $RepoDir = "prevcare-fullstack"
-    $NotesDir = "C:\ZWORK\Notes\Run-healthcare-software"
+    $NotesDir = "C:\ZWORK\Notes\prevcare"
 }
 Write-Host ""
 
