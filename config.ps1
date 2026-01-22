@@ -12,7 +12,7 @@
 $RepoUrl = "https://dev.azure.com/fnawaz/CHI%20Development/_git/prevcare-fullstack"
 
 # Branch name to checkout after cloning
-$BranchName = "new-transcriber-component-integration"
+$BranchName = "mumtaz/teleconsult_integration"
 
 # Directory Configuration
 # Local directory name where the repository will be cloned
@@ -25,5 +25,5 @@ $RepoDir = "prevcare-fullstack"
 #   - .env (transcriber)
 #   - .env (backend-new)
 #   - docker-compose.yml
-$NotesDir = "C:\ZWORK\Notes\Run-healthcare-software"
+$NotesDir = "C:\ZWORK\Notes\prevcare"
 

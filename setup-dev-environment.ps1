@@ -12,6 +12,7 @@
 #   setup-dev-environment.bat frontend                  # Run only frontend
 #   setup-dev-environment.bat transcriber               # Run only transcriber
 #   setup-dev-environment.bat transcriber-new          # Run only transcriber-new
+#   setup-dev-environment.bat teleconsult              # Run only teleconsult
 #   setup-dev-environment.bat checkout                 # Run only code checkout
 #   setup-dev-environment.bat backend,frontend          # Run backend and frontend
 #   setup-dev-environment.bat mysql,backend,transcriber # Run multiple steps
@@ -23,6 +24,7 @@
 #   .\setup-dev-environment.ps1 -Step frontend          # Run only frontend
 #   .\setup-dev-environment.ps1 -Step transcriber       # Run only transcriber
 #   .\setup-dev-environment.ps1 -Step transcriber-new  # Run only transcriber-new
+#   .\setup-dev-environment.ps1 -Step teleconsult      # Run only teleconsult
 #   .\setup-dev-environment.ps1 -Step checkout         # Run only code checkout
 #   .\setup-dev-environment.ps1 -Step backend,frontend  # Run multiple steps
 #
@@ -35,13 +37,15 @@
 #   frontend        - Step 4: Setup and run Frontend service (yarn)
 #   transcriber     - Step 5: Setup and run Audio Transcriber service (yarn)
 #   transcriber-new - Step 6: Setup and run Audio Transcriber Backend-New (npm)
+#   teleconsult     - Step 7: Setup and run Teleconsult Chime Angular v2 (npm)
 #
 # ============================================================================
 # WHAT EACH STEP DOES
 # ============================================================================
 # Step 1 (checkout):
-#   - Clones or updates the repository from Azure DevOps
+#   - Clones the repository from Azure DevOps if it doesn't exist
 #   - Checks out the branch: new-transcriber-component-integration
+#   - Skips checkout if repository folder already exists (to avoid overwriting code)
 #
 # Step 2 (mysql):
 #   - Copies docker-compose.yml from C:\ZWORK\Notes\prevcare
@@ -66,6 +70,10 @@
 #   - Opens new console window
 #   - Runs: npm install, npm start
 #
+# Step 7 (teleconsult):
+#   - Opens new console window
+#   - Runs: npm install, npm start
+#
 # ============================================================================
 
 param(
@@ -83,12 +91,13 @@ $StepMap = @{
     "frontend" = 4
     "transcriber" = 5
     "transcriber-new" = 6
+    "teleconsult" = 7
 }
 
 # Parse step parameter
 $StepsToRun = @()
 if ($Step -eq "all") {
-    $StepsToRun = @(1,2,3,4,5,6)
+    $StepsToRun = @(1,2,3,4,5,6,7)
 } else {
     $StepNames = $Step -split ',' | ForEach-Object { $_.Trim().ToLower() }
     foreach ($stepName in $StepNames) {
@@ -141,29 +150,23 @@ Set-Location $WorkspaceRoot
 
 # Step 1: Code Checkout
 if ($StepsToRun -contains 1) {
-    Write-Host "[1/6] Code Checkout..." -ForegroundColor Yellow
+    Write-Host "[1/7] Code Checkout..." -ForegroundColor Yellow
     if (Test-Path $RepoDir) {
-    Write-Host "Repository directory exists. Checking out branch..." -ForegroundColor Gray
-    Set-Location $RepoDir
-    git fetch origin
-    git checkout -b $BranchName 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Branch might already exist, switching to it..." -ForegroundColor Gray
-        git checkout $BranchName
+        Write-Host "Repository directory already exists. Skipping checkout to avoid overwriting code." -ForegroundColor Green
+        Write-Host "Repository location: $RepoDir" -ForegroundColor Gray
+        Write-Host "[OK] Code checkout skipped (repository already exists)" -ForegroundColor Green
+    } else {
+        Write-Host "Cloning repository..." -ForegroundColor Gray
+        git clone $RepoUrl $RepoDir -b $BranchName
+        Set-Location $WorkspaceRoot
+        Write-Host "[OK] Code checkout completed" -ForegroundColor Green
     }
-    Set-Location $WorkspaceRoot
-} else {
-    Write-Host "Cloning repository..." -ForegroundColor Gray
-    git clone $RepoUrl $RepoDir -b $BranchName
-    Set-Location $WorkspaceRoot
-    }
-    Write-Host "[OK] Code checkout completed" -ForegroundColor Green
     Write-Host ""
 }
 
 # Step 2: Run MySQL Docker
 if ($StepsToRun -contains 2) {
-    Write-Host "[2/6] Setting up MySQL Docker..." -ForegroundColor Yellow
+    Write-Host "[2/7] Setting up MySQL Docker..." -ForegroundColor Yellow
     $DockerComposeSource = Join-Path $NotesDir "docker-compose.yml"
     $DockerComposeDest = Join-Path $WorkspaceRoot "docker-compose_mysql.yml"
     
@@ -185,7 +188,7 @@ if ($StepsToRun -contains 2) {
 
 # Step 3: Run Backend
 if ($StepsToRun -contains 3) {
-    Write-Host "[3/6] Setting up Backend..." -ForegroundColor Yellow
+    Write-Host "[3/7] Setting up Backend..." -ForegroundColor Yellow
     $BackendDir = Join-Path (Join-Path $WorkspaceRoot $RepoDir) "backend"
     if (Test-Path $BackendDir) {
         Write-Host "Backend directory: $BackendDir" -ForegroundColor Gray
@@ -271,7 +274,7 @@ pause
 
 # Step 4: Run Frontend
 if ($StepsToRun -contains 4) {
-    Write-Host "[4/6] Setting up Frontend..." -ForegroundColor Yellow
+    Write-Host "[4/7] Setting up Frontend..." -ForegroundColor Yellow
     $FrontendDir = Join-Path (Join-Path $WorkspaceRoot $RepoDir) "frontend"
     # Check if it exists relative to repo or absolute path
     if (-not (Test-Path $FrontendDir)) {
@@ -301,7 +304,7 @@ pause
 
 # Step 5: Run Audio Transcriber
 if ($StepsToRun -contains 5) {
-    Write-Host "[5/6] Setting up Audio Transcriber..." -ForegroundColor Yellow
+    Write-Host "[5/7] Setting up Audio Transcriber..." -ForegroundColor Yellow
     $TranscriberDir = Join-Path (Join-Path $WorkspaceRoot $RepoDir) "audio-transcriber\backend"
     if (Test-Path $TranscriberDir) {
         $TranscriberEnvSource = Join-Path $NotesDir ".env (transcriber)"
@@ -333,7 +336,7 @@ pause
 
 # Step 6: Run Audio Transcriber Backend-New
 if ($StepsToRun -contains 6) {
-    Write-Host "[6/6] Setting up Audio Transcriber Backend-New..." -ForegroundColor Yellow
+    Write-Host "[6/7] Setting up Audio Transcriber Backend-New..." -ForegroundColor Yellow
     $TranscriberBackendNewDir = Join-Path (Join-Path $WorkspaceRoot $RepoDir) "audio-transcriber\backend-new"
     if (Test-Path $TranscriberBackendNewDir) {
         $TranscriberBackendNewEnvSource = Join-Path $NotesDir ".env (backend-new)"
@@ -359,12 +362,7 @@ if ($StepsToRun -contains 6) {
         $TranscriberBackendNewScript = @"
 @echo off
 cd /d "$TranscriberBackendNewDir"
-call npm install
-if %ERRORLEVEL% EQU 0 (
-    call npm start
-) else (
-    echo npm install failed, not starting the service
-)
+call npm install && call npm start
 pause
 "@
         $TranscriberBackendNewScriptPath = Join-Path $env:TEMP "start-transcriber-backend-new.bat"
@@ -373,6 +371,37 @@ pause
         Write-Host "[OK] Audio Transcriber Backend-New setup initiated in new window" -ForegroundColor Green
     } else {
         Write-Host "[ERROR] Audio Transcriber Backend-New directory not found at $TranscriberBackendNewDir" -ForegroundColor Red
+    }
+    Write-Host ""
+}
+
+# Step 7: Run Teleconsult Chime Angular v2
+if ($StepsToRun -contains 7) {
+    Write-Host "[7/7] Setting up Teleconsult Chime Angular v2..." -ForegroundColor Yellow
+    $TeleconsultDir = Join-Path (Join-Path $WorkspaceRoot $RepoDir) "teleconsult\chime-angular-v2"
+    
+    # Check if it exists relative to repo, if not try absolute path
+    if (-not (Test-Path $TeleconsultDir)) {
+        $TeleconsultDir = "C:\ZWORK\asghar\prevcare-fullstack\teleconsult\chime-angular-v2"
+        if (-not (Test-Path $TeleconsultDir)) {
+            $TeleconsultDir = Join-Path (Join-Path $WorkspaceRoot $RepoDir) "teleconsult\chime-angular-v2"
+        }
+    }
+    
+    if (Test-Path $TeleconsultDir) {
+        Write-Host "Opening new window for Teleconsult Chime Angular v2..." -ForegroundColor Gray
+        $TeleconsultScript = @"
+@echo off
+cd /d "$TeleconsultDir"
+call npm install && call npm start
+pause
+"@
+        $TeleconsultScriptPath = Join-Path $env:TEMP "start-teleconsult.bat"
+        $TeleconsultScript | Out-File -FilePath $TeleconsultScriptPath -Encoding ASCII
+        Start-Process cmd.exe -ArgumentList "/k", $TeleconsultScriptPath
+        Write-Host "[OK] Teleconsult Chime Angular v2 setup initiated in new window" -ForegroundColor Green
+    } else {
+        Write-Host "[ERROR] Teleconsult directory not found at $TeleconsultDir" -ForegroundColor Red
     }
     Write-Host ""
 }
